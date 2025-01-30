@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { altan_db } from '../../utils/axios.ts';
+import api from '../../utils/axios';
 
 // Define interfaces for the state
 interface TableRecord {
@@ -70,10 +70,9 @@ const initialState: TableState = {
   error: null,
 };
 
-// INCLUDE YOUR TABLE NAMES AND IDS HERE
-const SAMPLE_TABLES: Record<string, string> = {
-  your_table: 'YOUR_TABLE_ID',
-  your_table2: 'YOUR_TABLE_ID2',
+// Table configuration
+const TABLES = {
+  todos: 'e2bb58ff-5ba7-4dca-a9c5-b4c288ea94a7',
 };
 
 // Async Thunks
@@ -84,7 +83,7 @@ export const fetchTableRecords = createAsyncThunk(
     const tableId = state.tables.tables.byName[tableName];
     if (!tableId) throw new Error(`Table ${tableName} not found`);
 
-    const response = await altan_db.post(`/table/${tableId}/record/query`, {
+    const response = await api.post(`/table/${tableId}/record/query`, {
       filters: queryParams.filters || [],
       sort: queryParams.sort || [],
       limit: queryParams.limit || 100,
@@ -108,7 +107,7 @@ export const createRecord = createAsyncThunk(
     const tableId = state.tables.tables.byName[tableName];
     if (!tableId) throw new Error(`Table ${tableName} not found`);
 
-    const response = await altan_db.post(`/table/${tableId}/record`, {
+    const response = await api.post(`/table/${tableId}/record`, {
       records: [{ fields: record }],
     });
 
@@ -126,7 +125,7 @@ export const updateRecord = createAsyncThunk(
     const tableId = state.tables.tables.byName[tableName];
     if (!tableId) throw new Error(`Table ${tableName} not found`);
 
-    const response = await altan_db.patch(`/table/${tableId}/record/${recordId}`, {
+    const response = await api.patch(`/table/${tableId}/record/${recordId}`, {
       fields: updates,
     });
 
@@ -144,7 +143,7 @@ export const deleteRecord = createAsyncThunk(
     const tableId = state.tables.tables.byName[tableName];
     if (!tableId) throw new Error(`Table ${tableName} not found`);
 
-    await altan_db.delete(`/table/${tableId}/record/${recordId}`);
+    await api.delete(`/table/${tableId}/record/${recordId}`);
 
     return {
       tableId,
@@ -160,7 +159,7 @@ export const fetchTableSchema = createAsyncThunk(
     const tableId = state.tables.tables.byName[tableName];
     if (!tableId) throw new Error(`Table ${tableName} not found`);
 
-    const response = await altan_db.get(`/table/${tableId}`);
+    const response = await api.get(`/table/${tableId}`);
     return {
       tableId,
       schema: response.data.table,
@@ -174,7 +173,7 @@ const tablesSlice = createSlice({
   initialState,
   reducers: {
     initializeTables: (state) => {
-      Object.entries(SAMPLE_TABLES).forEach(([name, id]) => {
+      Object.entries(TABLES).forEach(([name, id]) => {
         state.tables.byId[id] = { id, name };
         state.tables.byName[name] = id;
         if (!state.tables.allIds.includes(id)) {
